@@ -1,0 +1,262 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsLabelPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'. For example johndns1 will result the final RDWEB access url like https://johndns1.westus.cloudapp.azure.com/RDWeb"
+      }
+    },
+    "adDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the AD domain. For example contoso.com"
+      },
+      "defaultValue": "contoso.com"
+    },
+    "adVnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The vnet name of AD domain. For example johnvnet1"
+      },
+      "defaultValue": "AD-VNET"
+    },
+    "adVnetRG": {
+      "type": "string",
+      "metadata": {
+        "description": "The Resource Group containing the existing Virtual Network resource"
+      },
+      "defaultValue": "AD-VNET-RG"
+    },
+    "adSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The subnet name of AD domain. For example johnsubnet1"
+      },
+      "defaultValue": "AD-VNET-SUBNET"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the administrator of the new VM and the domain. Exclusion list: 'administrator'. For example johnadmin"
+      },
+      "defaultValue": "vmadmin"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the administrator account of the new VM and the domain"
+      },
+      "defaultValue": ""
+    },
+    "imageSKU": {
+      "type": "string",
+      "allowedValues": [
+        "2012-R2-Datacenter",
+        "2016-Datacenter"
+      ],
+      "metadata": {
+        "description": "Windows server SKU"
+      },
+      "defaultValue": "2016-Datacenter"
+    },
+    "numberOfRdshInstances": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of RemoteDesktopSessionHosts"
+      }
+    },
+    "rdshVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_A1_v2",
+        "Standard_A2_v2",
+        "Standard_A2m_v2",
+        "Standard_A4_v2",
+        "Standard_A4m_v2",
+        "Standard_A8_v2",
+        "Standard_A8m_v2",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2"
+      ],
+      "metadata": {
+        "description": "The size of the RDSH VMs"
+      },
+      "defaultValue": "Standard_A4_v2"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "loadBalancer": {
+      "type": "string",
+      "metadata": {
+        "description": "The Loadbalancer name must match from the RDS deployment. And default value taken by template is loadbalancer."
+      },
+      "defaultValue": "loadBalancer"
+    },
+    "backendAddressPools": {
+      "type": "string",
+      "defaultValue": "LBBAP",
+      "metadata": {
+        "description": "The backendAddressPools name must match from the RDS deployment. And default value taken by template is LBBAP."
+      }
+    },
+    "numberOfWebGwInstances": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of RD Gateway instances"
+      }
+    },
+    "domainNetbios": {
+      "type": "string",
+      "metadata": {
+        "description": "Netbios Name for Domain"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage account name of RDS-Deployment"
+      }
+    }
+  },
+  "variables": {
+    "rds-without-existingAD-uri": "https://github.com/elamathiJv/Azure-Deployment-Templates/raw/master/rg.rds/rg.rds.ha.existing-ad/azuredeploy.json",
+    "rds-ha-gateway-uri": "https://raw.githubusercontent.com/elamathiJv/Azure-Deployment-Templates/master/rg.rds/rg.rds.ha.gateway/azuredeploy.json",
+    "rds-ha-broker-uri": "https://raw.githubusercontent.com/elamathiJv/Azure-Deployment-Templates/master/rg.rds/rg.rds.ha.broker/azuredeploy.json",
+    "rds-ha-gateway-availablilitySet-name": "gw-availabilityset",
+    "rds-ha-gateway-fqdn-internal-name": "concat('gateway.',parameters(adDomainName))",
+    "rds-ha-gateway-fqdn-external-name": "[concat('gwd', 'rdshademo1','.',parameters('location'),'.cloudapp.azure.com')]",
+    "rds-ha-brokerServer-fqdn-internal-name": "concat('broker.',parameters(adDomainName))"
+  },
+  "resources": [
+    {
+      "name": "rds-ha-without-existingAD-Deployment",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('rds-without-existingAD-uri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "dnsLabelPrefix": {
+            "value": "[parameters('dnsLabelPrefix')]"
+          },
+          "adDomainName": {
+            "value": "[parameters('adDomainName')]"
+          },
+          "adVnetName": {
+            "value": "[parameters('adVnetName')]"
+          },
+          "adVnetRG": {
+            "value": "[parameters('adVnetRG')]"
+          },
+          "adSubnetName": {
+            "value": "[parameters('adSubnetName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "imageSKU": {
+            "value": "[parameters('imageSKU')]"
+          },
+          "numberOfRdshInstances": {
+            "value": "[parameters('numberOfRdshInstances')]"
+          },
+          "rdshVmSize": {
+            "value": "[parameters('rdshVmSize')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "rds-ha-gateway-Deployment",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "dependsOn": [
+        "rds-ha-without-existingAD-Deployment"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('rds-ha-gateway-uri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "dnsLabelPrefix": {
+            "value": "[parameters('dnsLabelPrefix')]"
+          },
+          "loadBalancer": {
+            "value": "[parameters('loadBalancer')]"
+          },
+          "backendAddressPools": {
+            "value": "[parameters('backendAddressPools')]"
+          },
+          "gw-AvailabilitySet": {
+            "value": "[variables('rds-ha-gateway-availablilitySet-name')]"
+          },
+          "adDomainName": {
+            "value": "[parameters('adDomainName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "numberOfWebGwInstances": {
+            "value": "[parameters('numberOfWebGwInstances')]"
+          },
+          "brokerServer": {
+            "value": "[variables('rds-ha-brokerServer-fqdn-internal-name')]"
+          },
+          "WebURL": {
+            "value": "[variables('rds-ha-gateway-fqdn-external-name')]"
+          },
+          "domainNetbios": {
+            "value": "[parameters('domainNetbios')]"
+          },
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "imageSKU": {
+            "value": "[parameters('imageSKU')]"
+          },
+          "vmSize": {
+            "value": "[parameters('rdshVmSize')]"
+          },
+          "existingVnet": {
+            "value": "[parameters('adVnetName')]"
+          },
+          "existingSubnet": {
+            "value": "[parameters('adSubnetName')]"
+          },
+          "adVnetRG": {
+            "value": "[parameters('adVnetRG')]"
+          }
+        }
+      }
+    }
+
+  ],
+  "outputs": {
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsLabelPrefix": {
+      "value": "rdshagw"
+    },
+    "adDomainName": {
+      "value": "adm.scalesquad.io"
+    },
+    "adVnetName": {
+      "value": "VNAdminZone"
+    },
+    "adVnetRG": {
+      "value": "RgAdminZone"
+    },
+    "adSubnetName": {
+      "value": "default"
+    },
+    "adminUsername": {
+      "value": "ssubramanian"
+    },
+    "adminPassword": {
+      "value": "Letme1nn12345"
+    },
+    "numberOfRdshInstances": {
+      "value": 2
+    },
+    "loadBalancer": {
+      "value": "loadBalancer"
+    },
+    "backendAddressPools": {
+      "value": "LBBAP"
+    },
+    "numberOfWebGwInstances": {
+      "value": 1
+    },
+    "domainNetbios": {
+      "value": "adm"
+    },
+    "storageAccountName": {
+      "value": "sardsha123"
+    }
+  }
+}

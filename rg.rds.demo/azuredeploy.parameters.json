@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adDomainName": {
+      "value": "adm.scalesquad.io"
+    },
+    "adVnetName": {
+      "value": "VNAdminZone"
+    },
+    "adVnetRG": {
+      "value": "RgAdminZone"
+    },
+    "adSubnetName": {
+      "value": "default"
+    },
+    "adminUsername": {
+      "value": "ssubramanian"
+    },
+    "adminPassword": {
+      "value": "S@nth0sh"
+    },
+    "numberOfRdshInstances": {
+      "value": 2
+    }
+  }
+}
